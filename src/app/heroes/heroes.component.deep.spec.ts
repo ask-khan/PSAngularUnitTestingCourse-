@@ -1,4 +1,4 @@
-import { NO_ERRORS_SCHEMA } from "@angular/core";
+import { Directive, NO_ERRORS_SCHEMA } from "@angular/core";
 import { TestBed, ComponentFixture } from "@angular/core/testing";
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { By } from "@angular/platform-browser";
@@ -7,6 +7,20 @@ import { HeroService } from "../hero.service";
 import { HeroesComponent } from "./heroes.component";
 import { Hero } from "../hero";
 import { HeroComponent } from "../hero/hero.component";
+
+@Directive({
+    selector:'[routerLink]',
+    host: { '(click)': 'onClick()' }
+})
+
+export class RouteLinkDirectiveStub {
+    @Input('routerLink') linkParams:any;
+    navigatedTo: any = null;
+
+    onClick() {
+        this.navigatedTo = this.linkParams;
+    }
+}
 
 
 describe("HeroesComponent Deep Test" ,()=> {
@@ -20,7 +34,7 @@ describe("HeroesComponent Deep Test" ,()=> {
         ]
         mockHeroService = jasmine.createSpyObj(['getHeroes', 'addHero', 'deleteHero']);
         TestBed.configureTestingModule({
-            declarations:[HeroesComponent, HeroComponent],
+            declarations:[HeroesComponent, HeroComponent, RouteLinkDirectiveStub],
             providers:[{
                 provide: HeroService, useValue: mockHeroService
             }],
@@ -60,16 +74,28 @@ describe("HeroesComponent Deep Test" ,()=> {
         // run ngoninit
         fixture.detectChanges();
         const name = "Mr ice";
-        mockHeroService.addHero().and.returnValue(of( { id:5, name:name, strength:4 } ));
+        mockHeroService.addHero.and.returnValue(of( { id:5, name:name, strength:4 } ));
         const inputElement = fixture.debugElement.query(By.css('input')).nativeElement;
-        const buttonElement = fixture.debugElement.queryAll(By.css('button'))[0].nativeElement;
-        inputElement.name = name;
-        buttonElement.triggerEventHandler('click', null);
+        const addButton = fixture.debugElement.queryAll(By.css('button'))[0];
+        inputElement.value = name;
+        addButton.triggerEventHandler('click', null);
         fixture.detectChanges();
 
-        const heroText = inputElement.fixture.debugElement.query(By.css('ul')).nativeElement.textContent;
-        expect( heroText ).toContain(name);
+        const heroText = fixture.debugElement.query(By.css('ul')).nativeElement.textContent;
+        console.log( heroText );
+        expect( heroText ).toContain( name );
     });
 
+    it('should have the correct route for the first hero',()=> {
+        mockHeroService.getHeroes.and.returnValue(of(HEROES));
+        fixture.detectChanges();
+        const heroComponents =  fixture.debugElement.queryAll(By.directive(HeroComponent));
+        let routeLink = heroComponents[0].query(By.directive( RouteLinkDirectiveStub ))
+        .injector.get(RouteLinkDirectiveStub);
+
+        heroComponents[0].query(By.css('a')).triggerEventHandler('click',null);
+        console.log(routeLink.navigatedTo);
+        expect(routeLink.navigatedTo).toBe('/detail/1');
+    })
 
 });
