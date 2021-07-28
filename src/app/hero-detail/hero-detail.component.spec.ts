@@ -1,4 +1,4 @@
-import { TestBed, ComponentFixture, fakeAsync } from "@angular/core/testing";
+import { TestBed, ComponentFixture, fakeAsync, tick, flush, async } from "@angular/core/testing";
 import { ActivatedRoute } from "@angular/router";
 import { HeroService } from "../hero.service";
 import { HeroDetailComponent } from "./hero-detail.component";
@@ -8,7 +8,6 @@ import { of } from 'rxjs';
 import { Directive, Input } from "@angular/core";
 import { HeroComponent } from "../hero/hero.component";
 import { By } from "@angular/platform-browser";
-import { tick } from "@angular/core/src/render3";
 
 
 @Directive({
@@ -67,16 +66,31 @@ describe('Hero Detail Component',()=> {
         
     // }); 
 
-    it("should call updated hero when save is called", fakeAsync(()=> {
+    // it("should call updated hero when save is called", fakeAsync(()=> {
+    //     mockHeroService.updateHero.and.returnValue(of({}));
+    //     fixture.detectChanges();
+
+    //     fixture.componentInstance.save();
+    //     //tick(250);
+    //     flush();
+    //     expect( mockHeroService.updateHero ).toHaveBeenCalled();
+           
+    // })) 
+    
+
+    it("should call updated hero when save is called", async (()=> {
         mockHeroService.updateHero.and.returnValue(of({}));
         fixture.detectChanges();
 
         fixture.componentInstance.save();
-        tick(240);
-        expect( mockHeroService.updateHero ).toHaveBeenCalled();
+        fixture.whenStable().then(() => {
+            expect( mockHeroService.updateHero ).toHaveBeenCalled();
+        });
+        //tick(250);
+        //flush();
+        
            
     })) 
-    
 
 });  
 
